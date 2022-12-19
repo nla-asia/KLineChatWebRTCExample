@@ -14,7 +14,6 @@ android {
         versionCode 2
         versionName "2.0"
 
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
     }
@@ -25,10 +24,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = '1.8'
     }
@@ -39,10 +40,11 @@ android {
             withJavadocJar()
         }
     }
+
 }
 
 dependencies {
-
+     api "io.livekit:livekit-android:1.1.5"
 }
 
 afterEvaluate {
