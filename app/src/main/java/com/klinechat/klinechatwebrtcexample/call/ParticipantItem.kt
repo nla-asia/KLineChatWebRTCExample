@@ -1,10 +1,11 @@
-package com.klinechat.klinechatwebrtcexample
+package com.klinechat.klinechatwebrtcexample.call
 
 
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.View
 import com.github.ajalt.timberkt.Timber
+import com.klinechat.klinechatwebrtcexample.R
 import com.xwray.groupie.viewbinding.BindableItem
 import com.xwray.groupie.viewbinding.GroupieViewHolder
 

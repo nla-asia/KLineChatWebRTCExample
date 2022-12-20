@@ -1,4 +1,4 @@
-package com.klinechat.klinechatwebrtcexample
+package com.klinechat.klinechatwebrtcexample.call
 
 import android.app.Activity
 import android.media.projection.MediaProjectionManager
@@ -12,7 +12,11 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.klinechat.klinechatwebrtcexample.call.ParticipantItem
 import com.klinechat.klinechatwebrtcexample.databinding.CallActivityBinding
+import com.klinechat.klinechatwebrtcexample.showDebugMenuDialog
+import com.klinechat.klinechatwebrtcexample.showSelectAudioDeviceDialog
+import com.klinechat.klinechatwebrtcexample.viewModelByFactory
 import com.klinechat.webrtcsdk.CallViewModel
 import com.xwray.groupie.GroupieAdapter
 import kotlinx.coroutines.flow.collectLatest

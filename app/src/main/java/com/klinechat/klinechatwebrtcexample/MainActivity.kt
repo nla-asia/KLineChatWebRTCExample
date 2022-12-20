@@ -1,59 +1,135 @@
 package com.klinechat.klinechatwebrtcexample
 
-import android.Manifest
-import android.content.Intent
-import android.content.pm.PackageManager
+
 import android.os.Build
 import android.os.Bundle
-import android.text.SpannableStringBuilder
+import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.messaging.FirebaseMessaging
+import com.klinechat.klinechatwebrtcexample.api.RetrofitInstance
 import com.klinechat.klinechatwebrtcexample.databinding.MainActivityBinding
+
 
 // imports from library
 import com.klinechat.webrtcsdk.MainViewModel
 import com.klinechat.webrtcsdk.util.requestNeededPermissions
+import retrofit2.HttpException
+import java.io.IOException
 
 
 class MainActivity : AppCompatActivity() {
 
-    val viewModel by viewModels<MainViewModel>()
+   // val viewModel by viewModels<MainViewModel>()
+
+    private val TAG = "MainActivity"
+    private lateinit var binding: MainActivityBinding
+    private lateinit var contactAdapter: ContactAdapter
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val binding = MainActivityBinding.inflate(layoutInflater)
+         binding = MainActivityBinding.inflate(layoutInflater)
 
-        val urlString = "wss://webrtc.klinechat.com"
-        val tokenString = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2aWRlbyI6eyJyb29tSm9pbiI6dHJ1ZSwicm9vbSI6IllvbG8iLCJjYW5QdWJsaXNoIjp0cnVlLCJjYW5TdWJzY3JpYmUiOnRydWV9LCJpYXQiOjE2NzE1NDczMTUsIm5iZiI6MTY3MTU0NzMxNSwiZXhwIjoxNjcxNTY4OTE1LCJpc3MiOiJBUEk0WENrdVdndlFnVWUiLCJzdWIiOiIwOTc5MDU1Mjc3OSIsImp0aSI6IjA5NzkwNTUyNzc5In0.S9-0iFPFlqh7hb4utowYA_7b4mps87wSBxP80Pr43dE"
+      //  val urlString = "wss://webrtc.klinechat.com"
+      //  val tokenString = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2aWRlbyI6eyJyb29tSm9pbiI6dHJ1ZSwicm9vbSI6IllvbG8iLCJjYW5QdWJsaXNoIjp0cnVlLCJjYW5TdWJzY3JpYmUiOnRydWV9LCJpYXQiOjE2NzE1NDczMTUsIm5iZiI6MTY3MTU0NzMxNSwiZXhwIjoxNjcxNTY4OTE1LCJpc3MiOiJBUEk0WENrdVdndlFnVWUiLCJzdWIiOiIwOTc5MDU1Mjc3OSIsImp0aSI6IjA5NzkwNTUyNzc5In0.S9-0iFPFlqh7hb4utowYA_7b4mps87wSBxP80Pr43dE"
 
 
-        binding.run {
+        setContentView(binding.root)
+        setupRecyclerView()
+        requestNeededPermissions { }
+        registerDevice();
 
-            deviceId.text = SpannableStringBuilder("Your deviceID : $urlString")
+        lifecycleScope.launchWhenCreated {
 
-            connectButton.setOnClickListener {
-                val intent = Intent(this@MainActivity, CallActivity::class.java).apply {
-                    putExtra(
-                        CallActivity.KEY_ARGS,
-                        CallActivity.BundleArgs(
-                            urlString,
-                            tokenString
-                        )
-                    )
-                }
+            binding.progressBar.isVisible = true
+            val response = try {
 
-                startActivity(intent)
+                RetrofitInstance.api.getContacts("")
+
+            } catch(e: IOException){
+                binding.progressBar.isVisible = false
+                Toast.makeText(this@MainActivity, "Could not load contacts from server!", Toast.LENGTH_LONG).show()
+                return@launchWhenCreated
+            } catch (e: HttpException) {
+                binding.progressBar.isVisible = false
+                return@launchWhenCreated
             }
 
+            if(response.isSuccessful && response.body() != null){
+                val resp = response.body()!!
+                contactAdapter.contacts = resp.data
+            }
 
+            binding.progressBar.isVisible = false
 
         }
 
-        setContentView(binding.root)
 
-        requestNeededPermissions()
+
+
     }
+
+    private fun setupRecyclerView() = binding.contactList.apply {
+        contactAdapter = ContactAdapter()
+        adapter = contactAdapter
+        layoutManager = LinearLayoutManager( this@MainActivity)
+
+    }
+
+    private fun registerDevice() {
+
+        Log.d(TAG, "logging regToken...")
+        // [START log_reg_token]
+        FirebaseMessaging.getInstance().token
+            .addOnCompleteListener(OnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    Log.w(TAG, "Fetching FCM registration token failed", task.exception)
+                    return@OnCompleteListener
+                }
+                lifecycleScope.launchWhenCreated {
+
+                    // Get new FCM registration token
+                    val token = task.result
+
+                    // Log and toast
+                    val msg = "FCM Registration token: $token"
+                    Log.d(TAG, msg)
+                    //  Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
+                    val did: String = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+                    val regData = SaveTokenRequest(did, Build.MANUFACTURER +" "+ Build.MODEL,token)
+                    //send to server
+                    val respd = try {
+                        RetrofitInstance.api.saveToken(regData)
+                    } catch(e: IOException){
+                        Log.d(TAG, "io exception")
+                        return@launchWhenCreated
+                    } catch (e: HttpException) {
+                        Log.d(TAG, "http exception")
+                        return@launchWhenCreated
+                    }
+
+                    if(respd.isSuccessful && respd.body() != null){
+                        val resp = respd.body()!!
+
+                        Log.d(TAG, "device registration ok")
+                    }else{
+                        Log.d(TAG, "something wrong with device registration")
+                    }
+                }
+            })
+        // [END log_reg_token]
+
+    }
+
+
 }

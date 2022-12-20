@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-parcelize'
+    id 'com.google.gms.google-services'
 }
 
 android {
@@ -48,11 +49,26 @@ dependencies {
     implementation "com.github.lisawray.groupie:groupie:2.9.0"
     implementation "com.github.lisawray.groupie:groupie-viewbinding:2.9.0"
 
+    // Retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.0'
+
+    implementation 'com.squareup.picasso:picasso:2.8'
+
+    // Firebase
+    implementation platform('com.google.firebase:firebase-bom:30.3.2')
+    implementation 'com.google.firebase:firebase-messaging'
+    implementation 'com.google.firebase:firebase-messaging-ktx'
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-installations-ktx:17.0.1'
+    implementation 'androidx.work:work-runtime:2.7.1'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
 
+    // SDK
     implementation project(":webrtcsdk")
     //implementation 'com.github.nla-asia:KLineChatWebRTCExample:1.5'
 }
